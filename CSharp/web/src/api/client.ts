@@ -1,4 +1,5 @@
 import type { HelloResponse, StatsResponse } from './types'
+import { sanitizeStats } from './sanitize'
 
 // Thin fetch wrapper — throws a message-bearing Error on any non-2xx or
 // network failure so callers can render a styled error panel instead of
@@ -20,6 +21,6 @@ export function fetchHello(): Promise<HelloResponse> {
   return getJson<HelloResponse>('/api/hello')
 }
 
-export function fetchStats(): Promise<StatsResponse> {
-  return getJson<StatsResponse>('/api/stats')
+export async function fetchStats(): Promise<StatsResponse> {
+  return sanitizeStats(await getJson<unknown>('/api/stats'))
 }

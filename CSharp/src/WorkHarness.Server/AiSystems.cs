@@ -108,14 +108,24 @@ public static class AiSystemProbe
     {
         foreach (var command in commands)
         {
-            var version = await RunShellAsync(command, ct);
-            // First non-empty line only, prefix chatter stripped ("ollama version is 0.32.1" -> "0.32.1").
-            var line = version?.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.Length > 0);
-            if (line is not null)
-                return line.StartsWith("ollama version is ", StringComparison.OrdinalIgnoreCase)
-                    ? line["ollama version is ".Length..] : line;
+            var line = NormalizeVersionOutput(await RunShellAsync(command, ct));
+            if (line is not null) return line;
         }
         return null;
+    }
+
+    /// <summary>
+    /// First non-empty line only, prefix chatter stripped ("ollama version is 0.32.1" -> "0.32.1").
+    /// Null when the output holds no usable line. Internal for fuzz tests.
+    /// </summary>
+    internal static string? NormalizeVersionOutput(string? raw)
+    {
+        // Split on both CR and LF — a lone '\r' (progress spinner, old-Mac ending) must
+        // never survive into the "single line" result. Fuzz-found regression.
+        var line = raw?.Split(['\r', '\n']).Select(l => l.Trim()).FirstOrDefault(l => l.Length > 0);
+        if (line is null) return null;
+        return line.StartsWith("ollama version is ", StringComparison.OrdinalIgnoreCase)
+            ? line["ollama version is ".Length..] : line;
     }
 
     private static async Task<string?> RunShellAsync(string command, CancellationToken ct)

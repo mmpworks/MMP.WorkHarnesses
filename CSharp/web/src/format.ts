@@ -2,6 +2,9 @@
 // unit-testable without mounting Vue.
 
 export function formatMemoryMb(mb: number): string {
+  if (!Number.isFinite(mb)) {
+    return '—'
+  }
   if (mb >= 1024) {
     return `${(mb / 1024).toFixed(1)} GB`
   }
@@ -9,6 +12,9 @@ export function formatMemoryMb(mb: number): string {
 }
 
 export function formatUptimeHours(hours: number): string {
+  if (!Number.isFinite(hours)) {
+    return '—'
+  }
   if (hours >= 24) {
     const days = Math.floor(hours / 24)
     const rest = Math.round(hours % 24)
@@ -18,6 +24,9 @@ export function formatUptimeHours(hours: number): string {
 }
 
 export function formatClockTime(isoUtc: string): string {
+  if (typeof isoUtc !== 'string') {
+    return '—'
+  }
   const parsed = new Date(isoUtc)
   if (Number.isNaN(parsed.getTime())) {
     return isoUtc
