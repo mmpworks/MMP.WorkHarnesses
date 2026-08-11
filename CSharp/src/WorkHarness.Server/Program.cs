@@ -4,7 +4,7 @@ using MMP.Herald.Quick;
 using MMP.Herald.Templating;
 using WorkHarness.Server;
 
-// ---- Herald.OSS, native mode, with the harness's custom 14-level set. ------------
+// ---- Herald.OSS, native mode, with the harness's custom 10-level set. ------------
 // Rendered console sink for the terminal, rolling NDJSON file sink (one JSON object
 // per line — extension drives the format) for the structured record. The sys.* levels
 // carry framework noise (routed there by SystemAwareHeraldProvider); the plain
@@ -19,10 +19,6 @@ var herald = QuickLogBuilder.Create("workharness")
     .WithCustomLevel(WorkHarnessLevels.SysDebug, "SysDebug")
     .WithCustomLevel(WorkHarnessLevels.SysInformation, "SysInformation")
     .WithCustomLevel(WorkHarnessLevels.SysWarning, "SysWarning")
-    .WithCustomLevel(WorkHarnessLevels.Comms, "Comms")
-    .WithCustomLevel(WorkHarnessLevels.Money, "Money")
-    .WithCustomLevel(WorkHarnessLevels.Math, "Math")
-    .WithCustomLevel(WorkHarnessLevels.Simulation, "Simulation")
     .WithLevelOrder(WorkHarnessLevels.Order)
     .WithMinimumLevel(WorkHarnessLevels.SysInformation)
     .WithCustomFilter(WorkHarnessLevels.AtOrAbove(WorkHarnessLevels.SysInformation))
@@ -59,19 +55,13 @@ app.MapGet("/api/hello", () =>
 
 app.MapGet("/api/stats", async (CancellationToken ct) =>
 {
-    // Domain levels in action: comms for the probe conversation, math for the tally.
-    log.Log(WorkHarnessLevels.CommsLevel, appCategory, "STAT probe requested",
-        properties: null, context: null, eventId: null);
+    log.Information(appCategory, "STAT probe requested");
     var snapshot = await AiSystemProbe.CaptureAsync(ct);
-    log.Log(WorkHarnessLevels.MathLevel, appCategory,
+    log.Information(appCategory,
         "STAT tally: {SystemCount} systems, {RunningCount} running, {ProcessCount} processes",
-        properties:
-        [
-            new LogProperty("SystemCount", snapshot.Systems.Count),
-            new LogProperty("RunningCount", snapshot.Systems.Count(s => s.Running)),
-            new LogProperty("ProcessCount", snapshot.Systems.Sum(s => s.ProcessCount)),
-        ],
-        context: null, eventId: null);
+        new LogProperty("SystemCount", snapshot.Systems.Count),
+        new LogProperty("RunningCount", snapshot.Systems.Count(s => s.Running)),
+        new LogProperty("ProcessCount", snapshot.Systems.Sum(s => s.ProcessCount)));
     return Results.Ok(snapshot);
 });
 

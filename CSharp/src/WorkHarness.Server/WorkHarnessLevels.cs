@@ -17,20 +17,12 @@ public static class WorkHarnessLevels
     public const string SysInformation = "sys.information";
     public const string SysWarning = "sys.warning";
 
-    // Domain levels: idiomatic names for what the app is actually doing. They rank
-    // above information (always-on signal) and below the warning band.
-    public const string Comms = "comms";
-    public const string Money = "money";
-    public const string Math = "math";
-    public const string Simulation = "simulation";
-
     /// <summary>Rank order, lowest first — the single home of the ordering.</summary>
     public static readonly string[] Order =
     [
         SysVerbose, "verbose",
         SysDebug, "debug",
         SysInformation, "information",
-        Comms, Money, Math, Simulation,
         SysWarning, "warning",
         "error", "fatal",
     ];
@@ -41,10 +33,6 @@ public static class WorkHarnessLevels
     public static readonly LogLevel SysDebugLevel = new(SysDebug, "SysDebug");
     public static readonly LogLevel SysInformationLevel = new(SysInformation, "SysInformation");
     public static readonly LogLevel SysWarningLevel = new(SysWarning, "SysWarning");
-    public static readonly LogLevel CommsLevel = new(Comms, "Comms");
-    public static readonly LogLevel MoneyLevel = new(Money, "Money");
-    public static readonly LogLevel MathLevel = new(Math, "Math");
-    public static readonly LogLevel SimulationLevel = new(Simulation, "Simulation");
 
     /// <summary>True when a logger category is framework/system infrastructure.</summary>
     public static bool IsSystemCategory(string category) =>
@@ -60,7 +48,7 @@ public static class WorkHarnessLevels
     /// upstream to Herald.OSS: the engine's minimum-level filter skips events
     /// carrying custom levels (standard-level events filter correctly, and custom
     /// keys work as the floor — only custom-level EVENTS bypass the check). This
-    /// predicate enforces the floor over the full 14-level order. Unknown keys
+    /// predicate enforces the floor over the full 10-level order. Unknown keys
     /// pass, matching the engine's own permissive posture. Delete when Herald
     /// filters custom-level events natively.
     /// </summary>

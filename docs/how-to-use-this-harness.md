@@ -111,28 +111,27 @@ log.Information(appCategory, "Hello endpoint served for harness {Harness}",
     new LogProperty("Harness", "CSharp"));
 ```
 
-Domain levels read the same way, just with a level that names what's
-happening instead of a generic severity word:
+Custom levels read the same way through the general `Log` overload — a
+level, a category, a template:
 
 ```csharp
-log.Log(WorkHarnessLevels.CommsLevel, appCategory, "STAT probe requested",
+log.Log(WorkHarnessLevels.SysWarningLevel, someCategory, "template here",
     properties: null, context: null, eventId: null);
 ```
 
-Both lines are real, from `Program.cs`'s `/api/stats` handler.
+The first line is real, from `Program.cs`'s `/api/hello` handler.
 
-### The 14-level set
+### The 10-level set
 
 Most loggers give you a severity scale: verbose, debug, information,
-warning, error, fatal. This harness keeps that scale but splits three of its
-rungs in two, and adds four levels of its own. `WorkHarnessLevels.cs` is the
-single place the set and its rank order live:
+warning, error, fatal. This harness keeps that scale but splits four of its
+rungs in two. `WorkHarnessLevels.cs` is the single place the set and its
+rank order live:
 
 ```
 sys.verbose, verbose,
 sys.debug,   debug,
 sys.information, information,
-comms, money, math, simulation,
 sys.warning, warning,
 error, fatal
 ```
@@ -145,13 +144,6 @@ piece that sorts one from the other: it wraps every `ILogger` ASP.NET Core
 hands out, checks the category name, and routes to the `sys.` level when the
 category starts with `Microsoft` or `System`.
 
-`comms`, `money`, `math`, and `simulation` are domain levels: the harness's
-own vocabulary for the kinds of events it raises, sitting between
-`information` and the warning band. The `/api/stats` handler logs `comms`
-when a probe request comes in and `math` when it tallies the results, so the
-level itself tells a reader what kind of thing happened as well as how bad
-it was.
-
 > 💡 **Quick picture.** Think of the level set as two lanes on one highway.
 > A `sys.information` event and a plain `information` event matter at the
 > same severity; one came from the framework and one came from your code.
@@ -162,11 +154,6 @@ Error and fatal stay shared between framework and app on purpose: a failure
 is a failure, whoever raised it.
 
 ### Why the harness logs this way
-
-Naming the level after the domain event is CUPID's *Domain-based* property
-in practice. `comms`, `money`, `math`, and `simulation` come from what the
-app does. A reader scanning the log file for money-related events greps
-`money` instead of cross-referencing a severity number against a legend.
 
 Splitting framework noise from application signal at the level, rather than
 by category filtering after the fact, means one `WithMinimumLevel` threshold
@@ -207,7 +194,7 @@ the harness works around, both reported upstream to Herald.OSS:
 
 - **Custom-level events bypass the minimum-level filter.** Herald's
   built-in floor check works for the standard level set, but an event
-  logged at a custom level (`comms`, `money`, and the rest) currently
+  logged at a custom level (the `sys.*` set here) currently
   passes through regardless of the configured minimum. The workaround is
   `WorkHarnessLevels.AtOrAbove(...)`, a `WithCustomFilter` that re-checks
   the floor using the harness's own rank order. `Program.cs` and every test

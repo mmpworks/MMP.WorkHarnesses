@@ -6,8 +6,7 @@
 ## What
 
 An open-source project harness: a ready-to-clone frontend/backend bootstrap for starting new
-MMPWorks projects. It also serves as the recording set for MMPWorks YouTube videos, starting
-with MMP.SlotGame.
+MMPWorks projects. It also serves as the recording set for MMPWorks YouTube videos.
 
 ## Why
 

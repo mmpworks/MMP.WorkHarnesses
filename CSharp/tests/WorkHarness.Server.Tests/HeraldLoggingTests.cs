@@ -9,7 +9,7 @@ using LogLevel = MMP.Herald.Levels.LogLevel;
 namespace WorkHarness.Server.Tests;
 
 /// <summary>
-/// Herald.OSS native mode with the harness's custom 14-level set, exercised the way
+/// Herald.OSS native mode with the harness's custom 10-level set, exercised the way
 /// Program.cs uses it: console sink, rolling file sink, WithCustomLevel +
 /// WithLevelOrder. Every test builds its own pipeline against its own temp
 /// directory, so tests stay parallel-safe and file assertions are exact.
@@ -35,10 +35,6 @@ public sealed class HeraldLoggingTests : IDisposable
             .WithCustomLevel(WorkHarnessLevels.SysDebug, "SysDebug")
             .WithCustomLevel(WorkHarnessLevels.SysInformation, "SysInformation")
             .WithCustomLevel(WorkHarnessLevels.SysWarning, "SysWarning")
-            .WithCustomLevel(WorkHarnessLevels.Comms, "Comms")
-            .WithCustomLevel(WorkHarnessLevels.Money, "Money")
-            .WithCustomLevel(WorkHarnessLevels.Math, "Math")
-            .WithCustomLevel(WorkHarnessLevels.Simulation, "Simulation")
             .WithLevelOrder(WorkHarnessLevels.Order)
             .WithMinimumLevel(minimumLevel)
             // Same workaround Program.cs carries — see WorkHarnessLevels.AtOrAbove.
@@ -65,7 +61,7 @@ public sealed class HeraldLoggingTests : IDisposable
     // ---- The custom level set -----------------------------------------------------
 
     [Fact]
-    public async Task AllFourteenLevels_EmitAboveTheFloor()
+    public async Task AllTenLevels_EmitAboveTheFloor()
     {
         var result = CreateFilePipeline(minimumLevel: WorkHarnessLevels.SysVerbose);
         await using (result)
@@ -76,10 +72,6 @@ public sealed class HeraldLoggingTests : IDisposable
             Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Debug, "L debug");
             Emit(result.Logger, WorkHarnessLevels.SysInformationLevel, "L sys.information");
             Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Information, "L information");
-            Emit(result.Logger, WorkHarnessLevels.CommsLevel, "L comms");
-            Emit(result.Logger, WorkHarnessLevels.MoneyLevel, "L money");
-            Emit(result.Logger, WorkHarnessLevels.MathLevel, "L math");
-            Emit(result.Logger, WorkHarnessLevels.SimulationLevel, "L simulation");
             Emit(result.Logger, WorkHarnessLevels.SysWarningLevel, "L sys.warning");
             Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Warning, "L warning");
             Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Error, "L error");
@@ -90,8 +82,8 @@ public sealed class HeraldLoggingTests : IDisposable
         foreach (var key in WorkHarnessLevels.Order)
             Assert.Contains($"L {key}", text);
         // Display names render into the level column.
-        Assert.Contains("Comms", text);
-        Assert.Contains("Simulation", text);
+        Assert.Contains("SysInformation", text);
+        Assert.Contains("SysWarning", text);
     }
 
     [Fact]
@@ -103,7 +95,6 @@ public sealed class HeraldLoggingTests : IDisposable
             Emit(result.Logger, WorkHarnessLevels.SysInformationLevel, "dropped sys-info-marker");
             Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Debug, "dropped app-debug-marker");
             Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Information, "kept info-marker");
-            Emit(result.Logger, WorkHarnessLevels.CommsLevel, "kept comms-marker");
             Emit(result.Logger, WorkHarnessLevels.SysWarningLevel, "kept sys-warning-marker");
         }
 
@@ -111,31 +102,7 @@ public sealed class HeraldLoggingTests : IDisposable
         Assert.DoesNotContain("sys-info-marker", text);
         Assert.DoesNotContain("app-debug-marker", text);
         Assert.Contains("kept info-marker", text);
-        Assert.Contains("kept comms-marker", text);
         Assert.Contains("kept sys-warning-marker", text);
-    }
-
-    [Fact]
-    public async Task DomainLevels_RankBetweenInformationAndSysWarning()
-    {
-        // Floor at "simulation": comms/money/math fall below it, simulation and the
-        // warning band stay. Proves the order array drives real ranks.
-        var result = CreateFilePipeline(minimumLevel: WorkHarnessLevels.Simulation);
-        await using (result)
-        {
-            Emit(result.Logger, WorkHarnessLevels.CommsLevel, "below comms-marker");
-            Emit(result.Logger, WorkHarnessLevels.MoneyLevel, "below money-marker");
-            Emit(result.Logger, WorkHarnessLevels.MathLevel, "below math-marker");
-            Emit(result.Logger, WorkHarnessLevels.SimulationLevel, "kept simulation-marker");
-            Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Warning, "kept warning-marker");
-        }
-
-        var text = ReadAll();
-        Assert.DoesNotContain("below comms-marker", text);
-        Assert.DoesNotContain("below money-marker", text);
-        Assert.DoesNotContain("below math-marker", text);
-        Assert.Contains("kept simulation-marker", text);
-        Assert.Contains("kept warning-marker", text);
     }
 
     // ---- MEL routing: framework categories land on sys.* --------------------------
@@ -173,7 +140,7 @@ public sealed class HeraldLoggingTests : IDisposable
         var result = CreateFilePipeline(minimumLevel: WorkHarnessLevels.SysVerbose);
         await using (result)
         {
-            Emit(result.Logger, WorkHarnessLevels.CommsLevel,
+            Emit(result.Logger, MMP.Herald.Levels.KnownLogLevels.Information,
                 "probe {Target} answered", new LogProperty("Target", "claude"));
             Emit(result.Logger, WorkHarnessLevels.SysInformationLevel, "framework line");
         }
@@ -191,11 +158,13 @@ public sealed class HeraldLoggingTests : IDisposable
             Assert.True(root.TryGetProperty("message", out _));
         }
 
-        var comms = System.Text.Json.JsonDocument.Parse(lines[0]).RootElement;
-        Assert.Equal("comms", comms.GetProperty("level_key").GetString());
-        Assert.Equal("claude", comms.GetProperty("properties")
+        var probeLine = System.Text.Json.JsonDocument.Parse(lines[0]).RootElement;
+        Assert.Equal("information", probeLine.GetProperty("level_key").GetString());
+        Assert.Equal("claude", probeLine.GetProperty("properties")
             .GetProperty("Target").GetProperty("value").GetString());
-        Assert.Equal("probe {Target} answered", comms.GetProperty("message_template").GetString());
+        Assert.Equal("probe {Target} answered", probeLine.GetProperty("message_template").GetString());
+        Assert.Equal("sys.information", System.Text.Json.JsonDocument.Parse(lines[1])
+            .RootElement.GetProperty("level_key").GetString());
     }
 
     // ---- Arities and rendering ----------------------------------------------------
@@ -269,8 +238,8 @@ public sealed class HeraldLoggingTests : IDisposable
     /// <summary>
     /// PINNED ENGINE BUG (reported upstream to Herald.OSS): without the
     /// AtOrAbove workaround filter, events at CUSTOM levels bypass the engine's
-    /// minimum-level check — a comms event lands even under a warning floor,
-    /// despite comms ranking below warning in the registered order. If this
+    /// minimum-level check — a sys.information event lands even under a warning
+    /// floor, despite ranking below warning in the registered order. If this
     /// starts failing, Herald fixed the filter: delete this pin and the
     /// WorkHarnessLevels.AtOrAbove workaround.
     /// </summary>
@@ -280,13 +249,13 @@ public sealed class HeraldLoggingTests : IDisposable
         var result = QuickLogBuilder.Create()
             .WithFileSink(Path.Combine(_dir, "test-.ndjson"),
                 interval: "daily", maxBytes: 1024 * 1024, maxRetainedFiles: 2)
-            .WithCustomLevel(WorkHarnessLevels.Comms, "Comms")
+            .WithCustomLevel(WorkHarnessLevels.SysInformation, "SysInformation")
             .WithLevelOrder(WorkHarnessLevels.Order)
             .WithMinimumLevel("warning")   // no AtOrAbove filter on purpose
             .BuildAndCommit();
         await using (result)
         {
-            Emit(result.Logger, WorkHarnessLevels.CommsLevel, "bypass-marker");
+            Emit(result.Logger, WorkHarnessLevels.SysInformationLevel, "bypass-marker");
         }
 
         Assert.Contains("bypass-marker", ReadAll());
@@ -297,7 +266,9 @@ public sealed class HeraldLoggingTests : IDisposable
     {
         const int iterations = 2000;
         var rng = new Random(0x5EED);
-        var result = CreateFilePipeline(maxBytes: 1024 * 1024 * 1024);
+        // Floor at the bottom — RandomLevel spans sys.* levels that rank below information.
+        var result = CreateFilePipeline(maxBytes: 1024 * 1024 * 1024,
+            minimumLevel: WorkHarnessLevels.SysVerbose);
         await using (result)
         {
             for (var i = 0; i < iterations; i++)
@@ -321,7 +292,9 @@ public sealed class HeraldLoggingTests : IDisposable
     {
         const int writers = 8;
         const int perWriter = 250;
-        var result = CreateFilePipeline(maxBytes: 1024 * 1024 * 1024);
+        // Floor at the bottom — RandomLevel spans sys.* levels that rank below information.
+        var result = CreateFilePipeline(maxBytes: 1024 * 1024 * 1024,
+            minimumLevel: WorkHarnessLevels.SysVerbose);
         await using (result)
         {
             await Task.WhenAll(Enumerable.Range(0, writers).Select(w => Task.Run(() =>
@@ -370,13 +343,13 @@ public sealed class HeraldLoggingTests : IDisposable
         {
             var result = QuickLogBuilder.Create()
                 .WithConsoleSink()
-                .WithCustomLevel(WorkHarnessLevels.Comms, "Comms")
+                .WithCustomLevel(WorkHarnessLevels.SysInformation, "SysInformation")
                 .WithLevelOrder(WorkHarnessLevels.Order)
                 .WithMinimumLevel(WorkHarnessLevels.SysVerbose)
                 .BuildAndCommit();
             await using (result)
             {
-                Emit(result.Logger, WorkHarnessLevels.CommsLevel,
+                Emit(result.Logger, WorkHarnessLevels.SysInformationLevel,
                     "console marker {Value}", new LogProperty("Value", 777));
             }
         }
@@ -394,10 +367,10 @@ public sealed class HeraldLoggingTests : IDisposable
     private static LogLevel RandomLevel(Random rng) => rng.Next(6) switch
     {
         0 => MMP.Herald.Levels.KnownLogLevels.Information,
-        1 => WorkHarnessLevels.CommsLevel,
-        2 => WorkHarnessLevels.MoneyLevel,
-        3 => WorkHarnessLevels.MathLevel,
-        4 => WorkHarnessLevels.SimulationLevel,
+        1 => WorkHarnessLevels.SysInformationLevel,
+        2 => WorkHarnessLevels.SysWarningLevel,
+        3 => MMP.Herald.Levels.KnownLogLevels.Warning,
+        4 => MMP.Herald.Levels.KnownLogLevels.Fatal,
         _ => MMP.Herald.Levels.KnownLogLevels.Error,
     };
 

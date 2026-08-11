@@ -6,3 +6,4 @@ logs/
 *.user
 .DS_Store
 .idea/
+docs/_editing/
