@@ -45,7 +45,7 @@ public sealed class HeraldIntegrationTests : IClassFixture<WebApplicationFactory
             if (Directory.Exists(logsDir))
             {
                 var text = string.Concat(Directory
-                    .GetFiles(logsDir, "workharness-*.log")
+                    .GetFiles(logsDir, "workharness-*.ndjson")
                     .Select(f => { using var s = new StreamReader(new FileStream(
                         f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)); return s.ReadToEnd(); }));
                 if (text.Length > 0) return text;

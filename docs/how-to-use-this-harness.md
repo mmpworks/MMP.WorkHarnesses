@@ -177,10 +177,14 @@ framework's verbosity without your own.
 ### Where the logs land
 
 - **Console** — every log line prints to the terminal you started the
-  server from.
-- **File** — `logs/workharness-.log` (relative to the working directory the
-  server runs from), rolling daily, five days retained, capped at 10 MB per
-  file before Herald starts a new one.
+  server from, rendered for reading.
+- **File** — `logs/workharness-.ndjson` (relative to the working directory
+  the server runs from), rolling daily, five days retained, capped at 10 MB
+  per file before Herald starts a new one. The `.ndjson` extension tells
+  Herald to write structured JSON: one object per line carrying `time`,
+  `level`, `level_key`, `level_rank`, `category`, `message_template`, the
+  rendered `message`, and every template property as data — ready for jq,
+  ingestion, or the dashboard without parsing log text.
 
 On shutdown, `await herald.DisposeAsync()` runs in a `finally` block so any
 buffered file-sink output is written before the process exits.

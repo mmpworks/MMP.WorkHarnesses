@@ -29,7 +29,7 @@ public sealed class HeraldLoggingTests : IDisposable
         long maxBytes = 10 * 1024 * 1024,
         string minimumLevel = "information")
         => QuickLogBuilder.Create()
-            .WithFileSink(Path.Combine(_dir, "test-.log"),
+            .WithFileSink(Path.Combine(_dir, "test-.ndjson"),
                 interval: "daily", maxBytes: maxBytes, maxRetainedFiles: 5)
             .WithCustomLevel(WorkHarnessLevels.SysVerbose, "SysVerbose")
             .WithCustomLevel(WorkHarnessLevels.SysDebug, "SysDebug")
@@ -165,6 +165,39 @@ public sealed class HeraldLoggingTests : IDisposable
         Assert.DoesNotContain("SysInformation", appLine);
     }
 
+    // ---- Structured JSON output ---------------------------------------------------
+
+    [Fact]
+    public async Task EveryFileLine_IsValidJson_WithTheStructuredFields()
+    {
+        var result = CreateFilePipeline(minimumLevel: WorkHarnessLevels.SysVerbose);
+        await using (result)
+        {
+            Emit(result.Logger, WorkHarnessLevels.CommsLevel,
+                "probe {Target} answered", new LogProperty("Target", "claude"));
+            Emit(result.Logger, WorkHarnessLevels.SysInformationLevel, "framework line");
+        }
+
+        var lines = ReadAll().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, lines.Length);
+        foreach (var line in lines)
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(line); // throws on non-JSON
+            var root = doc.RootElement;
+            Assert.True(root.TryGetProperty("time", out _));
+            Assert.True(root.TryGetProperty("level_key", out _));
+            Assert.True(root.TryGetProperty("level_rank", out _));
+            Assert.True(root.TryGetProperty("category", out _));
+            Assert.True(root.TryGetProperty("message", out _));
+        }
+
+        var comms = System.Text.Json.JsonDocument.Parse(lines[0]).RootElement;
+        Assert.Equal("comms", comms.GetProperty("level_key").GetString());
+        Assert.Equal("claude", comms.GetProperty("properties")
+            .GetProperty("Target").GetProperty("value").GetString());
+        Assert.Equal("probe {Target} answered", comms.GetProperty("message_template").GetString());
+    }
+
     // ---- Arities and rendering ----------------------------------------------------
 
     [Fact]
@@ -245,7 +278,7 @@ public sealed class HeraldLoggingTests : IDisposable
     public async Task CustomLevelEvents_CurrentlyBypassMinimumLevel_WithoutWorkaround()
     {
         var result = QuickLogBuilder.Create()
-            .WithFileSink(Path.Combine(_dir, "test-.log"),
+            .WithFileSink(Path.Combine(_dir, "test-.ndjson"),
                 interval: "daily", maxBytes: 1024 * 1024, maxRetainedFiles: 2)
             .WithCustomLevel(WorkHarnessLevels.Comms, "Comms")
             .WithLevelOrder(WorkHarnessLevels.Order)
@@ -275,7 +308,9 @@ public sealed class HeraldLoggingTests : IDisposable
             }
         }
 
-        var landed = ReadAll().Split("FZMARK").Length - 1;
+        // One JSON object per line; the marker shows up twice per event (template +
+        // rendered message), so count lines, never substring hits.
+        var landed = ReadAll().Split('\n').Count(l => l.Contains("FZMARK"));
         Assert.Equal(iterations, landed);
     }
 
@@ -298,7 +333,7 @@ public sealed class HeraldLoggingTests : IDisposable
             })));
         }
 
-        Assert.Equal(writers * perWriter, ReadAll().Split("CCMARK").Length - 1);
+        Assert.Equal(writers * perWriter, ReadAll().Split('\n').Count(l => l.Contains("CCMARK")));
     }
 
     // ---- Rolling ------------------------------------------------------------------

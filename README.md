@@ -60,7 +60,8 @@ The server logs through **Herald.OSS in native mode**, using a custom
 14-level event set. The `sys.*` levels carry framework noise and the plain
 levels carry application signal. Four domain levels (`comms`, `money`,
 `math`, `simulation`) name what the app is doing. Two sinks are wired by
-default: a console writer and a rolling file.
+default: a rendered console writer and a rolling NDJSON file (structured
+JSON, one object per line).
 
 [`docs/how-to-use-this-harness.md`](docs/how-to-use-this-harness.md) covers
 the level set, what a call site looks like, the configuration code, and why

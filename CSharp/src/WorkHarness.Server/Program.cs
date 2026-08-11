@@ -4,13 +4,14 @@ using MMP.Herald.Quick;
 using MMP.Herald.Templating;
 using WorkHarness.Server;
 
-// ---- Herald.OSS, native mode, with the harness's custom 10-level set. ------------
-// Console sink for the terminal, rolling file sink for the record. The sys.* levels
+// ---- Herald.OSS, native mode, with the harness's custom 14-level set. ------------
+// Rendered console sink for the terminal, rolling NDJSON file sink (one JSON object
+// per line — extension drives the format) for the structured record. The sys.* levels
 // carry framework noise (routed there by SystemAwareHeraldProvider); the plain
 // levels carry application signal. See WorkHarnessLevels for the ordering rationale.
 var herald = QuickLogBuilder.Create("workharness")
     .WithConsoleSink()
-    .WithFileSink("logs/workharness-.log",
+    .WithFileSink("logs/workharness-.ndjson",
         interval: "daily",
         maxBytes: 10 * 1024 * 1024,
         maxRetainedFiles: 5)
