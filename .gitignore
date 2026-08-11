@@ -5,3 +5,4 @@ dist/
 logs/
 *.user
 .DS_Store
+.idea/
