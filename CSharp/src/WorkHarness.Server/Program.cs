@@ -20,8 +20,8 @@ var herald = QuickLogBuilder.Create("workharness")
     .WithCustomLevel(WorkHarnessLevels.SysInformation, "SysInformation")
     .WithCustomLevel(WorkHarnessLevels.SysWarning, "SysWarning")
     .WithHttpJsonSink("http://localhost:5090/api/logs/ingest")   // relayed to the SPA log viewer over SSE
-    .WithAsyncLogging()   // buffered: the HttpJson sink posts off the request thread (and never
-                          // blocks startup logs emitted before Kestrel is listening)
+    .WithAsyncLogging()   // buffered: the HttpJson sink posts off the request thread, and
+                          // startup logs emitted before Kestrel is listening never block
     .WithLevelOrder(WorkHarnessLevels.Order)
     .WithMinimumLevel(WorkHarnessLevels.SysInformation)
     // AtOrAbove: custom-level floor workaround. The ingest-path guard breaks the

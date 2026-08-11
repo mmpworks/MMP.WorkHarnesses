@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Live SSE log viewer. Virtualizes a 25k-row ring buffer at a fixed row
 // height (LogRow.vue is 22px) using the top/bottom-spacer technique so only
-// the rows in view ever touch the DOM. Filtering is view-side — hidden
-// levels stay in the buffer — and Follow re-engages on scroll-to-bottom,
-// disengaging the moment the operator scrolls up to read history.
+// the rows in view ever touch the DOM. Filtering is view-side (hidden levels
+// stay in the buffer), and Follow re-engages on scroll-to-bottom, disengaging
+// the moment the operator scrolls up to read history.
 import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useLogStream } from '../composables/useLogStream'
 import { LEVEL_FAMILIES, LEVEL_META, LEVEL_ORDER, levelColor, normalizeLevelKey, type LevelKey } from '../logviewer/levels'

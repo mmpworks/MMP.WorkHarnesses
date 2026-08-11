@@ -61,8 +61,8 @@ const segments = computed(() =>
 }
 
 .log-row__level {
-  /* Fixed column: fits the longest label (SYSINFORMATION) so level never
-     bleeds into category and every category starts on the same x. */
+  /* Fixed column: the longest rendered label is INFORMATION (11ch); the extra
+     width keeps level clear of category so every category starts on the same x. */
   flex: 0 0 15ch;
   text-transform: uppercase;
   letter-spacing: 0.04em;

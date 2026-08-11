@@ -1,7 +1,7 @@
 // Ring-buffer trim: appends new items and drops the oldest past `cap`.
-// Implemented as a batched array trim (not a true circular index) because
-// the buffer is rebuilt wholesale on every flush anyway — one slice per
-// flush is cheap even at the 25k cap, and callers always get a fresh array
+// A batched array copy rather than a true circular index: the caller replaces the
+// whole reactive array on each flush regardless, so one concat plus at most one
+// slice per flush is cheap even at the 25k cap. Callers always get a fresh array
 // reference (immutable-update convention), never a mutated one.
 
 export function appendWithCap<T>(existing: readonly T[], incoming: readonly T[], cap: number): T[] {

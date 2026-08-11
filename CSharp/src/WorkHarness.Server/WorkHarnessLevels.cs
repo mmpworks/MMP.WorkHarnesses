@@ -3,8 +3,8 @@ using LogLevel = MMP.Herald.Levels.LogLevel;
 namespace WorkHarness.Server;
 
 /// <summary>
-/// The harness's 10-level event set. System-origin events (ASP.NET, DI, HttpClient —
-/// any Microsoft.*/System.* category) log at the <c>sys.</c> variant of their level;
+/// The harness's 10-level event set. System-origin events (ASP.NET, DI, HttpClient: any
+/// Microsoft.*/System.* category) log at the <c>sys.</c> variant of their level;
 /// application events log at the plain variant. Ranks interleave so one minimum-level
 /// threshold can keep application signal while dropping framework noise of the same
 /// nominal severity. Error and fatal stay shared: a failure is a failure, whoever

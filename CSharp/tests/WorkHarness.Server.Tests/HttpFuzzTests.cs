@@ -7,7 +7,8 @@ namespace WorkHarness.Server.Tests;
 /// <summary>
 /// Seeded HTTP fuzz against the in-process server: random paths (traversal attempts,
 /// percent-encoding, unicode, long segments) and random methods on the API surface.
-/// Invariant: the server never returns 5xx and never leaks a file outside web/dist.
+/// Invariants: no request produces a 5xx, and known traversal shapes never return
+/// server-source or package-manifest content.
 /// </summary>
 public sealed class HttpFuzzTests : IClassFixture<WebApplicationFactory<Program>>
 {

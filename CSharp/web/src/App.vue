@@ -20,8 +20,8 @@ async function loadHello(): Promise<void> {
   try {
     hello.value = await fetchHello()
   } catch {
-    // The footer hello-line is a quiet status signal, not a blocking
-    // concern — a failed probe here just leaves the footer blank.
+    // A failed hello probe just leaves the footer blank; nothing else
+    // depends on it.
     hello.value = null
   }
 }

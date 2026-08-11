@@ -1,8 +1,7 @@
 // SSE-backed ring buffer for the log viewer. Connects on mount, reconnects
 // with backoff on drop, and disconnects on unmount. Incoming events are
 // batched per animation frame before touching the reactive array, so a
-// burst of events costs one Vue re-render per frame instead of one per
-// event — this is what keeps the view smooth at the 25,000-row cap.
+// burst of events costs one Vue re-render per frame instead of one per event.
 
 import { onMounted, onUnmounted, ref, shallowRef, type Ref, type ShallowRef } from 'vue'
 import type { LogEvent } from '../api/types'

@@ -1,6 +1,8 @@
 // Wire contract for WorkHarness.Server's /api/hello and /api/stats endpoints.
-// Field names and shapes mirror the server's JSON exactly — keep in lockstep
-// with the C# response models.
+// Field names follow the server's JSON; keep them in lockstep with the C#
+// response models. These are the shapes after sanitize.ts normalizes the payload,
+// so a field's type here is what a component receives: level_rank is a string
+// because Herald serializes the rank as a quoted JSON value.
 
 export interface HelloResponse {
   message: string

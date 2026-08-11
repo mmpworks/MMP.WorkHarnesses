@@ -1,8 +1,8 @@
 # MMP.WorkHarnesses compose root.
 #
 # The C# harness (server + built-in SPA) is the core service. Add external
-# frontend/backend services beyond the C# environment as additional entries —
-# each new service is one block here; the core never changes.
+# frontend/backend services beyond the C# environment as additional entries:
+# each new service is one block here, with no restructuring of the core service.
 #
 # Run from this directory:  docker compose up --build
 # Then open http://localhost:5090

@@ -1,6 +1,7 @@
 // Level metadata for the log viewer: canonical rank order, display labels,
 // and the sys.*/plain pairing used by the filter control and row coloring.
-// Kept framework-free so it's trivially unit-testable.
+// Framework-free, so the filter UI and row coloring share one source of truth
+// without importing Vue.
 
 export type LevelKey =
   | 'sys.verbose'

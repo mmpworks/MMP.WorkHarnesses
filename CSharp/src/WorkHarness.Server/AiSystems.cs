@@ -25,14 +25,15 @@ public sealed record StatsSnapshot(
 
 /// <summary>
 /// Probes the host for known AI systems (Claude Code, Copilot, Codex, Cursor, Gemini, Ollama):
-/// CLI presence/version plus a live process scan. Extend by adding a row to <see cref="Catalog"/>.
+/// CLI presence/version plus a live process scan. Extend by adding a row to the catalog array
+/// in this file.
 /// </summary>
 public static class AiSystemProbe
 {
     private sealed record CatalogEntry(string Id, string Name, string[] VersionCommands, string[] ProcessKeys);
 
-    // GEM-free by design: a flat catalog row per system is the extensible seam (AIF) —
-    // adding a system is one line, no machinery.
+    // A flat row per system is the whole extension mechanism: adding a system is one
+    // line here, with no registry or plugin interface to wire up.
     private static readonly CatalogEntry[] Catalog =
     [
         new("claude",  "Claude Code",     ["claude --version"],                          ["claude"]),
@@ -103,7 +104,7 @@ public static class AiSystemProbe
         return result;
     }
 
-    /// <summary>First command that exits 0 with output wins; null when none do (not installed).</summary>
+    /// <summary>First command that exits 0 with usable output wins; null means the CLI is absent.</summary>
     private static async Task<string?> ProbeVersionAsync(string[] commands, CancellationToken ct)
     {
         foreach (var command in commands)
@@ -121,7 +122,7 @@ public static class AiSystemProbe
     internal static string? NormalizeVersionOutput(string? raw)
     {
         // Split on both CR and LF — a lone '\r' (progress spinner, old-Mac ending) must
-        // never survive into the "single line" result. Fuzz-found regression.
+        // never survive into the "single line" result.
         var line = raw?.Split(['\r', '\n']).Select(l => l.Trim()).FirstOrDefault(l => l.Length > 0);
         if (line is null) return null;
         return line.StartsWith("ollama version is ", StringComparison.OrdinalIgnoreCase)

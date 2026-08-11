@@ -10,9 +10,9 @@ namespace WorkHarness.Server.Tests;
 
 /// <summary>
 /// Herald.OSS native mode with the harness's custom 10-level set, exercised the way
-/// Program.cs uses it: console sink, rolling file sink, WithCustomLevel +
-/// WithLevelOrder. Every test builds its own pipeline against its own temp
-/// directory, so tests stay parallel-safe and file assertions are exact.
+/// Program.cs uses it. Most tests build a rolling-file-sink pipeline (WithCustomLevel +
+/// WithLevelOrder) over their own temp directory, so tests stay parallel-safe and file
+/// assertions are exact; the console sink has its own test.
 /// </summary>
 public sealed class HeraldLoggingTests : IDisposable
 {
@@ -222,7 +222,8 @@ public sealed class HeraldLoggingTests : IDisposable
     /// brace (no throw). The Serilog COMPAT adapter's parse path throws
     /// InvalidOperationException on the same input — a surface inconsistency
     /// reported upstream to Herald.OSS. If this starts failing, the native
-    /// contract changed — revisit both pins.
+    /// contract changed — revisit this pin and
+    /// CustomLevelEvents_CurrentlyBypassMinimumLevel_WithoutWorkaround.
     /// </summary>
     [Fact]
     public async Task UnclosedTemplateBrace_NativeSurfaceTolerates()

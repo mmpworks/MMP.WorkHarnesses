@@ -81,7 +81,7 @@ describe('format helpers survive arbitrary input', () => {
     const rand = prng(0xf00d)
     for (let i = 0; i < 2000; i++) {
       const v = garbageValue(rand)
-      // Intentional type-breaking casts: these are exactly the malformed inputs under test.
+      // Intentional type-breaking casts: malformed input is the point of this test.
       expect(typeof formatMemoryMb(v as number)).toBe('string')
       expect(typeof formatUptimeHours(v as number)).toBe('string')
       expect(typeof formatClockTime(v as string)).toBe('string')

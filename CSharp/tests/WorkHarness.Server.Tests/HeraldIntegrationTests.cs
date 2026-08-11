@@ -19,7 +19,8 @@ public sealed class HeraldIntegrationTests : IClassFixture<WebApplicationFactory
         using var client = _factory.CreateClient();
         (await client.GetAsync("/api/hello")).EnsureSuccessStatusCode();
 
-        // The file sink is sync in this configuration, but give slow CI disks a beat.
+        // Program.cs builds the pipeline with WithAsyncLogging, so lines land on a
+        // background drain — poll rather than reading once.
         var text = await ReadServerLogsAsync();
         Assert.Contains("Hello endpoint served", text);
     }
@@ -37,8 +38,8 @@ public sealed class HeraldIntegrationTests : IClassFixture<WebApplicationFactory
     private static async Task<string> ReadServerLogsAsync()
     {
         // The file sink resolves its relative path against the process working
-        // directory — under the test host that is the test bin dir, not the
-        // server content root.
+        // directory — under the test host that resolves to the test bin directory
+        // rather than the server content root.
         var logsDir = Path.Combine(Directory.GetCurrentDirectory(), "logs");
         for (var attempt = 0; attempt < 20; attempt++)
         {
