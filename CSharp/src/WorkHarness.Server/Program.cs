@@ -19,9 +19,17 @@ var herald = QuickLogBuilder.Create("workharness")
     .WithCustomLevel(WorkHarnessLevels.SysDebug, "SysDebug")
     .WithCustomLevel(WorkHarnessLevels.SysInformation, "SysInformation")
     .WithCustomLevel(WorkHarnessLevels.SysWarning, "SysWarning")
+    .WithHttpJsonSink("http://localhost:5090/api/logs/ingest")   // relayed to the SPA log viewer over SSE
+    .WithAsyncLogging()   // buffered: the HttpJson sink posts off the request thread (and never
+                          // blocks startup logs emitted before Kestrel is listening)
     .WithLevelOrder(WorkHarnessLevels.Order)
     .WithMinimumLevel(WorkHarnessLevels.SysInformation)
-    .WithCustomFilter(WorkHarnessLevels.AtOrAbove(WorkHarnessLevels.SysInformation))
+    // AtOrAbove: custom-level floor workaround. The ingest-path guard breaks the
+    // feedback loop: request logs ABOUT the ingest endpoint would otherwise be
+    // posted back to it by the HttpJson sink, forever.
+    .WithCustomFilter(logEvent =>
+        WorkHarnessLevels.AtOrAbove(WorkHarnessLevels.SysInformation)(logEvent) &&
+        !logEvent.Message.Contains("/api/logs/ingest", StringComparison.Ordinal))
     .BuildAndCommit();
 
 var log = herald.Logger;
@@ -34,10 +42,14 @@ builder.WebHost.UseUrls(builder.Configuration["urls"] ?? "http://localhost:5090"
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins("http://localhost:5173")   // Vite dev server
     .AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddSingleton<LogStreamService>();
 
 // Framework categories -> sys.* levels, app categories -> plain levels.
 builder.Logging.ClearProviders();
 builder.Logging.AddProvider(new SystemAwareHeraldProvider(log));
+// Result-writer chatter fires on every response but never names the request path,
+// so the ingest-path loop guard can't catch it — cut it off at the MEL layer.
+builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Result", LogLevel.Warning);
 
 var app = builder.Build();
 app.UseCors();
@@ -63,6 +75,42 @@ app.MapGet("/api/stats", async (CancellationToken ct) =>
         new LogProperty("RunningCount", snapshot.Systems.Count(s => s.Running)),
         new LogProperty("ProcessCount", snapshot.Systems.Sum(s => s.ProcessCount)));
     return Results.Ok(snapshot);
+});
+
+// ---- Log relay: Herald's HttpJson sink posts batches here; SSE fans them out. ----
+app.MapPost("/api/logs/ingest", async (HttpRequest request, LogStreamService stream) =>
+{
+    using var doc = await System.Text.Json.JsonDocument.ParseAsync(request.Body);
+    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+    {
+        foreach (var logEvent in doc.RootElement.EnumerateArray())
+            stream.Publish(logEvent.GetRawText());
+    }
+    else
+    {
+        stream.Publish(doc.RootElement.GetRawText());
+    }
+    return Results.NoContent();
+});
+
+app.MapGet("/api/logs/stream", async (HttpContext context, LogStreamService stream) =>
+{
+    context.Response.Headers.ContentType = "text/event-stream";
+    context.Response.Headers.CacheControl = "no-cache";
+    var (id, reader) = stream.Subscribe();
+    try
+    {
+        await foreach (var jsonEvent in reader.ReadAllAsync(context.RequestAborted))
+        {
+            await context.Response.WriteAsync($"data: {jsonEvent}\n\n", context.RequestAborted);
+            await context.Response.Body.FlushAsync(context.RequestAborted);
+        }
+    }
+    catch (OperationCanceledException) { /* client disconnected */ }
+    finally
+    {
+        stream.Unsubscribe(id);
+    }
 });
 
 // ---- SPA hosting: built web/dist in dev checkout, wwwroot inside the container. ----

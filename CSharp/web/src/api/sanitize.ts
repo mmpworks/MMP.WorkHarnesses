@@ -2,7 +2,7 @@
 // into the exact StatsResponse shape before any component sees it. Malformed or
 // hostile JSON degrades to placeholder values — the dashboard never crashes.
 
-import type { AiSystemStats, MachineStats, ProcessStats, StatsResponse } from './types'
+import type { AiSystemStats, LogEvent, LogPropertyValue, MachineStats, ProcessStats, StatsResponse } from './types'
 
 function num(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
@@ -69,5 +69,42 @@ export function sanitizeStats(raw: unknown): StatsResponse {
     generatedAtUtc: str(r.generatedAtUtc),
     machine: sanitizeMachine(r.machine),
     systems: arr(r.systems).map(sanitizeSystem),
+  }
+}
+
+function sanitizePropertyValue(raw: unknown): LogPropertyValue {
+  const p = record(raw)
+  return {
+    value: 'value' in p ? p.value : undefined,
+    capture_mode: typeof p.capture_mode === 'string' ? p.capture_mode : undefined,
+  }
+}
+
+function sanitizeProperties(raw: unknown): Record<string, LogPropertyValue> {
+  const p = record(raw)
+  const out: Record<string, LogPropertyValue> = {}
+  for (const key of Object.keys(p)) {
+    out[key] = sanitizePropertyValue(p[key])
+  }
+  return out
+}
+
+// A log frame with no message is not useful to render — the SSE parser
+// treats a null return as "skip this frame" rather than showing a blank row.
+export function sanitizeLogEvent(raw: unknown): LogEvent | null {
+  const e = record(raw)
+  if (typeof e.message !== 'string') {
+    return null
+  }
+  return {
+    time: str(e.time),
+    level: str(e.level, 'Information'),
+    level_key: str(e.level_key, 'information'),
+    level_rank: str(e.level_rank, '0'),
+    category: str(e.category),
+    message_template: str(e.message_template),
+    message: e.message,
+    properties: sanitizeProperties(e.properties),
+    context: record(e.context),
   }
 }

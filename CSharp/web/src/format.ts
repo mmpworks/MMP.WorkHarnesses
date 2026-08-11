@@ -23,6 +23,20 @@ export function formatUptimeHours(hours: number): string {
   return `${hours.toFixed(1)}h`
 }
 
+/** HH:MM:SS.mmm in local time — the log viewer's compact per-row timestamp. */
+export function formatLogTimestamp(isoUtc: string): string {
+  if (typeof isoUtc !== 'string') {
+    return '—'
+  }
+  const parsed = new Date(isoUtc)
+  if (Number.isNaN(parsed.getTime())) {
+    return isoUtc
+  }
+  const pad2 = (n: number) => n.toString().padStart(2, '0')
+  const pad3 = (n: number) => n.toString().padStart(3, '0')
+  return `${pad2(parsed.getHours())}:${pad2(parsed.getMinutes())}:${pad2(parsed.getSeconds())}.${pad3(parsed.getMilliseconds())}`
+}
+
 export function formatClockTime(isoUtc: string): string {
   if (typeof isoUtc !== 'string') {
     return '—'

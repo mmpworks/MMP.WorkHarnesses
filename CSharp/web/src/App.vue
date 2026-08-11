@@ -7,6 +7,7 @@ import MachineStrip from './components/MachineStrip.vue'
 import SystemCard from './components/SystemCard.vue'
 import LoadingState from './components/LoadingState.vue'
 import ErrorPanel from './components/ErrorPanel.vue'
+import LogViewer from './components/LogViewer.vue'
 
 type StatsPhase = 'idle' | 'loading' | 'loaded' | 'error'
 
@@ -77,6 +78,8 @@ void loadHello()
   </section>
 
   <p v-else class="hint">Press STAT to probe this machine for installed AI systems.</p>
+
+  <LogViewer />
 
   <footer class="footer">
     <span v-if="hello">{{ hello.message }} &middot; {{ hello.harness }}</span>

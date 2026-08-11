@@ -14,6 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Herald.OSS" Version="0.12.11" />
     <PackageReference Include="MMP.Herald.Sinks.File" Version="0.2.1" />
+    <PackageReference Include="MMP.Herald.Sinks.HttpJson" Version="0.2.1" />
   </ItemGroup>
 
 </Project>

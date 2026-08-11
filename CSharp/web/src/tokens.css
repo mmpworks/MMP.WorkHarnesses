@@ -25,6 +25,24 @@
   --color-status-dormant: #4a4f5c; /* #4a4f5c — signal-ash: not installed */
   --color-status-error: #e2685f; /* #e2685f — signal-ember: error panel accent */
 
+  /* Log viewer — level colors. Each sys.* variant is a desaturated/dimmer
+     version of its plain counterpart so the framework-origin and app-origin
+     lanes read apart at a glance; error/fatal have no sys.* pair. */
+  --color-log-sys-verbose: #4d4b46; /* #4d4b46 — dim-ash: sys.verbose */
+  --color-log-verbose: #6f6c64; /* #6f6c64 — muted-taupe: verbose */
+  --color-log-sys-debug: #5a574f; /* #5a574f — dim-taupe: sys.debug */
+  --color-log-debug: #948f84; /* #948f84 — parchment-dim: debug */
+  --color-log-sys-information: #7d7f86; /* #7d7f86 — dim-steel: sys.information */
+  --color-log-information: #ece7dd; /* #ece7dd — parchment: information (bright) */
+  --color-log-sys-warning: #a8813f; /* #a8813f — dim-amber: sys.warning */
+  --color-log-warning: #e3a53f; /* #e3a53f — amber-warn: warning */
+  --color-log-error: #e2685f; /* #e2685f — signal-ember: error */
+  --color-log-fatal: #ff4d4d; /* #ff4d4d — crimson-alert: fatal (deeper + bold) */
+
+  /* Interpolated {Name} values inside a rebuilt message template — kept
+     distinct from both the decorative brass accent and the level colors. */
+  --color-log-value: #7fd1c9; /* #7fd1c9 — teal-mint: template value highlight */
+
   /* Text */
   --color-text-primary: #ece7dd; /* #ece7dd — parchment: primary text on dark ground */
   --color-text-secondary: #9a978f; /* #9a978f — parchment-dim: secondary/meta text */

@@ -39,3 +39,23 @@ export interface StatsResponse {
   machine: MachineStats
   systems: AiSystemStats[]
 }
+
+// Wire contract for WorkHarness.Server's /api/logs/stream SSE endpoint.
+// Each `data:` frame is one JSON object matching this shape.
+
+export interface LogPropertyValue {
+  value: unknown
+  capture_mode?: string
+}
+
+export interface LogEvent {
+  time: string
+  level: string
+  level_key: string
+  level_rank: string
+  category: string
+  message_template: string
+  message: string
+  properties: Record<string, LogPropertyValue>
+  context: Record<string, unknown>
+}
