@@ -41,7 +41,7 @@ const segments = computed(() =>
 .log-row {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
+  gap: 1.1rem;
   height: 22px;
   line-height: 22px;
   padding: 0 var(--space-sm);
@@ -61,16 +61,18 @@ const segments = computed(() =>
 }
 
 .log-row__level {
-  flex: 0 0 auto;
-  width: 5.6em;
+  /* Fixed column: fits the longest label (SYSINFORMATION) so level never
+     bleeds into category and every category starts on the same x. */
+  flex: 0 0 15ch;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.68rem;
+  overflow: hidden;
 }
 
 .log-row__category {
-  flex: 0 0 auto;
-  max-width: 22ch;
+  /* Fixed column for the same reason — messages all start aligned. */
+  flex: 0 0 30ch;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--color-text-secondary);
